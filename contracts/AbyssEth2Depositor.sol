@@ -9,16 +9,14 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../contracts/interfaces/IDepositContract.sol";
 
-contract AbyssEth2Depositor is Pausable, Ownable {
-    using SafeMath for uint256;
+contract AbyssEth2Depositor is ReentrancyGuard, Pausable, Ownable {
 
     /**
      * @dev Eth2 Deposit Contract address.
@@ -30,6 +28,9 @@ contract AbyssEth2Depositor is Pausable, Ownable {
      */
     uint256 public constant nodesMinAmount = 1;
     uint256 public constant nodesMaxAmount = 100;
+    uint256 public constant pubkeyLength = 48;
+    uint256 public constant credentialsLength = 32;
+    uint256 public constant signatureLength = 96;
 
     /**
      * @dev Collateral size of one node.
@@ -39,8 +40,14 @@ contract AbyssEth2Depositor is Pausable, Ownable {
     /**
      * @dev Setting Eth2 Smart Contract address during construction.
      */
-    constructor(address depositContractAddress) public {
-        depositContract = IDepositContract(address(depositContractAddress));
+    constructor(bool mainnet, address depositContract_) {
+        if (mainnet == true) {
+            depositContract = IDepositContract(0x00000000219ab540356cBB839Cbe05303d7705Fa);
+        } else if (depositContract_ == 0x0000000000000000000000000000000000000000) {
+            depositContract = IDepositContract(0x8c5fecdC472E27Bc447696F431E425D02dd46a8c);
+        } else {
+            depositContract = IDepositContract(depositContract_);
+        }
     }
 
     /**
@@ -68,7 +75,9 @@ contract AbyssEth2Depositor is Pausable, Ownable {
         uint256 nodesAmount = pubkeys.length;
 
         require(nodesAmount > 0 && nodesAmount <= 100, "AbyssEth2Depositor: you can deposit only 1 to 100 nodes per transaction");
-        require(msg.value == SafeMath.mul(collateral, nodesAmount), "AbyssEth2Depositor: the amount of ETH does not match the amount of nodes");
+        require(msg.value == collateral * nodesAmount, "AbyssEth2Depositor: the amount of ETH does not match the amount of nodes");
+
+
         require(
             withdrawal_credentials.length == nodesAmount &&
             signatures.length == nodesAmount &&
@@ -76,6 +85,9 @@ contract AbyssEth2Depositor is Pausable, Ownable {
             "AbyssEth2Depositor: amount of parameters do no match");
 
         for (uint256 i = 0; i < nodesAmount; ++i) {
+            require(pubkeys[i].length == pubkeyLength, "AbyssEth2Depositor: wrong pubkey");
+            require(withdrawal_credentials[i].length == credentialsLength, "AbyssEth2Depositor: wrong withdrawal credentials");
+            require(signatures[i].length == signatureLength, "AbyssEth2Depositor: wrong signatures");
 
             IDepositContract(address(depositContract)).deposit{value: collateral}(
                 pubkeys[i],

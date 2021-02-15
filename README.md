@@ -9,8 +9,8 @@ Contracts
 Below is a list of contracts we use for this service:
 
 <dl>
-  <dt>SafeMath, Ownable, Pausable</dt>
-  <dd>Openzepellin smart contracts. The first contract allows for processing mathematical calculations safely. The second contract allows for managing ownership. The last contract allows for pausing the contract and vice versa.</dd>
+  <dt>Ownable, Pausable</dt>
+  <dd>Openzepellin smart contracts. The first contract allows for managing ownership. The second contract allows for pausing the contract and vice versa.</dd>
 </dl>
 
 <dl>
@@ -44,7 +44,7 @@ Deployment (Mainnet)
 
 Smart contracts should be deployed with such constructor parameters:
 
-1. `AbyssEth2Depositor.sol` _(0x00000000219ab540356cBB839Cbe05303d7705Fa)_
+1. `AbyssEth2Depositor.sol` _(true, 0x0000000000000000000000000000000000000000)_
 
 How to Use
 ------------
